@@ -1,0 +1,4 @@
+config/*.pem
+config/config.ini
+uploads/
+*.docker.tar.xz

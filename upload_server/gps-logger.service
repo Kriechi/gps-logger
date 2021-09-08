@@ -1,0 +1,20 @@
+[Unit]
+Description=GPS Logger Upload Server
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/usr/bin/python3 -u /usr/local/bin/upload_server.py
+Restart=always
+RestartSec=1
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
