@@ -2,7 +2,8 @@
 
 This [GPS logger device](https://en.wikipedia.org/wiki/GPS_tracking_unit#Data_loggers)
 can be used to build a small and compact device to log GPS location data and
-timestamps to an SD card in regular intervals. Possible use cases include: 
+timestamps to an SD card in regular intervals. Possible use cases include:
+
 * tracking routes of vehicles
   * car, motorcycles, trucks, boats, drones, model aircrafts, etc.
 * personal exercise
@@ -44,6 +45,7 @@ can "look through" plastic tapes and parts.
 The Wemos D1 mini is connected to the Micro-SD card shield via SPI. All pins
 should match directly the footprint of both boards are stacked on top of each
 other: 
+
 * SS directly to SS on the shield
 * MOSI directly to MOSI on the shield
 * MISO directly to MISO on the shield
@@ -52,6 +54,7 @@ other:
 * GND directly to GND on the shield
 
 The GPS module uses a UART/serial connection:
+
 * GPS RXD pin to the D1 pin on the Wemos module
 * GPS TXD pin to the D2 pin on the Wemos module
 * GPS VCC pin to 3.3V on the Wemos module
@@ -60,7 +63,7 @@ The GPS module uses a UART/serial connection:
 
 ### GPS Module Modification
 
-My M8N GPS module came with a tiny rechargable battery to keep the real time
+My M8N GPS module came with a tiny rechargeable battery to keep the real time
 clock and memory data intact - but it turned out this battery was discharging
 withing minutes. I replaced this tiny battery with a CR2032 coin cell (typical
 PC motherboard BIOS battery with pre-attached leads). I cut of the small
@@ -77,10 +80,10 @@ cooking the other components on the module.
 
 ![GPS module front side](/gps-module-front.jpeg)
 
-![GPS module back side](/gps-module-back.jpeg) 
+![GPS module back side](/gps-module-back.jpeg)
 
 All red circles are components to be desoldered. The top left is the old tiny
-rechargable battery that was replaced with a CR2032 soldered directly to the
+rechargeable battery that was replaced with a CR2032 soldered directly to the
 same PCB pads.
 
 ![New CR2032 battery](/cr2032.jpeg)
@@ -98,13 +101,15 @@ and libraries are defined in `platformio.ini`:
 See [PlatformIO](https://platformio.org/) for more information on how to get started.
 
 Quick development commands:
+
 * compile and verify the code: `platformio run`
-* compile and uplod the code: `platformio run --target upload`
+* compile and upload the code: `platformio run --target upload`
 * get a serial console of the device: `platformio device monitor`
 
 ### Configuration
 
 There are two files with available configuration values:
+
 * `include/wifi_credentials.h`
 * `include/customizations.h`
 
@@ -187,7 +192,7 @@ working RTC battery to keep the time information during power cycles, otherwise
 the AssistNow data becomes useless without time information. The system will
 only keep the most recent data files on the SD card and delete outdated ones.
 They all are named as `ASSISTNOW-{ONLINE,OFFLINE}-{timestamp}.bin`. These files
-contain UBX message, a propritary messaging format that u-blox GPS receivers
+contain UBX message, a proprietary messaging format that u-blox GPS receivers
 understand. For our purposes we are simply uploading them as binary blobs from
 the ESP8266 SD card to the GPS receiver via its built-in serial connection (same
 connection as we are reading in the GPS location data).
@@ -229,6 +234,7 @@ Common Name: gps-logger.example.com
 
 And get the certificate fingerprint to put it into the ESP8266 software
 `include/customizations.h` file:
+
 ```bash
 $ openssl x509 -fingerprint -in cert.pem -noout                
 SHA1 Fingerprint=12:34:56:78:90:AB:CD:12:34:56:78:90:AB:CD:12:34:56:78:90:AB
@@ -257,6 +263,7 @@ output_path=/some/path/to/store/output/
 ```
 
 You can omit individual lines and their default will be used:
+
 * `listen_host` defaults to empty or `0.0.0.0`, it will listen to all
   interfaces on IPv4.
 * `listen_port` defaults to 8472.
