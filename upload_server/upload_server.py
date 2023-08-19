@@ -24,27 +24,27 @@ OUTPUT_PATH = None
 
 class UploadServerRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        self.response(404)
+        self.send_error(404)
 
     def do_PUT(self):
-        self.response(404)
+        self.send_error(404)
 
     def do_POST(self):
         print(f"Receiving POST from {self.client_address} ...")
         if MAGIC_HEADER and MAGIC_HEADER_VALUE:
             if self.headers.get(MAGIC_HEADER, None) != MAGIC_HEADER_VALUE:
                 print("Failed magic header check.")
-                self.response(403)
+                self.send_error(403)
                 return
         if self.path != HTTP_PATH:
             print(f"Wrong path: {self.path}")
-            self.response(403)
+            self.send_error(403)
             return
 
         expected = int(self.headers["Content-Length"])
         if expected > 4 * 1024 * 1024:
             print(f"Unexpectedly large file size - rejecting to prevent disk fill up.")
-            self.response(403)
+            self.send_error(403)
             return
         print(f"Expecting {expected} bytes of GPS data...")
 
@@ -62,7 +62,7 @@ class UploadServerRequestHandler(http.server.BaseHTTPRequestHandler):
                 written = f.write(d)
                 if written != len(d):
                     print("Error writing to file!")
-                    self.response(403)
+                    self.send_error(403)
                     return
                 copied_bytes += len(d)
 
@@ -183,4 +183,4 @@ if __name__ == "__main__":
     for key, value in config.items():
         print(f"Configuration {key}: {value}")
 
-    run()
+        run()
