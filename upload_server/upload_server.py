@@ -84,50 +84,87 @@ class UploadServerRequestHandler(http.server.BaseHTTPRequestHandler):
         )
 
 
-def convert_to_gpx(filename):
+def write_gpx(input_filename: str, gpx: gpxpy.gpx.GPX):
     # GPX file format specification: https://www.topografix.com/gpx_manual.asp
-    gpx = gpxpy.gpx.GPX()
-    track = gpxpy.gpx.GPXTrack()
-    gpx.tracks.append(track)
-    segment = None
-    last_timestamp = None
-    count = 0
+    if not gpx:
+        return
 
-    with open(filename) as f:
+    moving_data = gpx.tracks[-1].get_moving_data()
+    distance = (moving_data.moving_distance + moving_data.stopped_distance) / 1000.0
+    duration = moving_data.moving_time + moving_data.stopped_time
+    hours, r = divmod(duration, 3600)
+    minutes, _ = divmod(r, 60)
+
+    start_timestamp = gpx.tracks[0].segments[0].points[0].time
+
+    output_filename = os.path.join(
+        OUTPUT_PATH,
+        "_".join([
+            start_timestamp.strftime("%Y-%m-%dT%H%M"),
+            f"{distance:.0f}km",
+            f"{int(hours)}h{int(minutes):02}min",
+        ]) + "_" +
+        os.path.splitext(os.path.basename(input_filename))[0] + ".gpx",
+    )
+
+    with open(output_filename, "w") as f:
+        f.write(gpx.to_xml(version="1.0"))
+    print(f"Converted input {input_filename} to {output_filename} with {gpx.tracks[-1].get_points_no()} points.")
+
+
+def convert_to_gpx(input_filename: str):
+    last_timestamp = None
+    start_timestamp = None
+    current_gpx = None
+
+    with open(input_filename) as f:
         reader = csv.reader(f, delimiter=";")
         next(reader)  # skip column headers
         for row in reader:
             try:
                 lat, lon, elevation, speed, num_satellites = row[1:]
             except:
-                # line might be incomplete when writing happened during power-down (can occur multiple times per file)
+                # line might be incomplete when writing happened during power-down
+                # (can occur multiple times per file)
                 print(f"Skipping broken data row: {row}")
                 continue
 
             timestamp = datetime.datetime.strptime(row[0], "%Y-%m-%dT%H:%M:%SZ")
+
+            if not start_timestamp or start_timestamp.date() != timestamp.date():
+                start_timestamp = timestamp
+
+                # write file up-till-now
+                write_gpx(input_filename, current_gpx)
+
+                # start a new file
+                current_gpx = gpxpy.gpx.GPX()
+                current_gpx.tracks.append(gpxpy.gpx.GPXTrack())
+                current_gpx.tracks[-1].comment = open(input_filename).read()
+
             if not last_timestamp:
                 last_timestamp = timestamp
-            if not segment or (
+
+            new_segment_needed = (
+                len(current_gpx.tracks[-1].segments) == 0 or \
                 timestamp - last_timestamp > datetime.timedelta(minutes=5)
-            ):
-                segment = gpxpy.gpx.GPXTrackSegment()
-                track.segments.append(segment)
+            )
+            if new_segment_needed:
+                current_gpx.tracks[-1].segments.append(gpxpy.gpx.GPXTrackSegment())
+
             last_timestamp = timestamp
             point = gpxpy.gpx.GPXTrackPoint(
-                lat, lon, elevation=elevation, speed=speed, time=timestamp
+                latitude=float(lat),
+                longitude=float(lon),
+                elevation=float(elevation),
+                speed=float(speed),
+                time=timestamp
             )
             point.satellites = num_satellites
-            segment.points.append(point)
-            count += 1
+            current_gpx.tracks[-1].segments[-1].points.append(point)
 
-    output_filename = os.path.join(
-        OUTPUT_PATH,
-        os.path.splitext(os.path.basename(filename))[0] + ".gpx",
-    )
-    with open(output_filename, "w") as f:
-        f.write(gpx.to_xml(version="1.0"))
-
-    print(f"Converted file {filename} to {output_filename} with {count} points.")
+    # write the last file that was still in progress
+    write_gpx(input_filename, current_gpx)
 
 
 def run():
