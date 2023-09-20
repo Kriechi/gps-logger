@@ -183,7 +183,9 @@ if __name__ == "__main__":
     for key, value in config.items():
         print(f"Configuration {key}: {value}")
 
-    if len(sys.argv) == 2:
-        convert_to_gpx(os.path.expanduser(sys.argv[1]))
+    print(sys.argv)
+    if len(sys.argv) >= 2:
+        for file in sys.argv[1:]:
+            convert_to_gpx(os.path.expanduser(file))
     else:
         run()
